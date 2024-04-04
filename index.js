@@ -38,7 +38,11 @@ const SuperAdmin = require('./routes/superAdminRoute.js');
 app.use('/superadmin', SuperAdmin);
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////
+const Courses=require('./routes/courseRoute.js')
+app.use('/courses', Courses)
 
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////
 app.listen(PORT, () => {
   // if (!process.env.RESEND_API_KEY) {
   //   throw `Abort: You need to define RESEND_API_KEY in the .env file.`;

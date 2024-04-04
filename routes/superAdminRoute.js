@@ -22,5 +22,15 @@ router.post('/login', authenticateToken, SuperAdminController.loginSuperAdmin);
 // router.get('/reset-password/:token', UserController.renderResetPasswordPage);
 // router.post('/reset-password/:token', UserController.resetPassword);
 
-module.exports = router;
 
+// Import middleware for Superadmin authentication
+const { authenticateSuperadmin } = require('../middleware/authMiddleware');
+
+// Superadmin CRUD operations endpoints
+router.post('/courses', authenticateToken, SuperAdminController.createCourse);
+router.get('/courses/:id', authenticateToken, SuperAdminController.getCourse);
+router.put('/courses/:id', authenticateToken, SuperAdminController.updateCourse);
+router.delete('/courses/:id', authenticateToken, SuperAdminController.deleteCourse);
+
+
+module.exports = router;

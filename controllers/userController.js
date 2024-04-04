@@ -66,7 +66,7 @@ exports.updateUserProfile = async (req, res) => {
 
 // Generate JWT token
 const generateToken = (userId) => {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '1h' });
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '24h' });
 };
 
 // User registration

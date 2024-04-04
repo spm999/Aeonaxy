@@ -27,33 +27,24 @@ const sql = postgres({
 exports.getCourses = async (req, res) => {
   try {
     // Extract query parameters
-    const { category, level, page, limit } = req.query;
-    const pageNumber = parseInt(page) || 1;
-    const pageSize = parseInt(limit) || 10; // Default limit is 10
-
-    // Calculate offset
-    const offset = (pageNumber - 1) * pageSize;
+    const { category, level } = req.query;
 
     // Construct base query
-    let query = `SELECT * FROM courses`;
+    let query = sql`SELECT * FROM courses`;
 
     // Add filters
     const filters = [];
-    if (category) filters.push(`category = '${category}'`);
-    if (level) filters.push(`level = '${level}'`);
+    if (category) filters.push(sql`category = ${category}`);
+    if (level) filters.push(sql`level = ${level}`);
     // Add other filters as needed
 
     if (filters.length > 0) {
-      query += ` WHERE ` + filters.join(` AND `);
+      query.append(sql` WHERE `);
+      query.append(filters.join(sql` AND `));
     }
 
-    // Add pagination
-    // if (pageSize > 10) {
-      query += ` OFFSET ${offset} LIMIT ${pageSize}`;
-    // }
-
     // Execute query
-    const courses = await sql.unsafe(query);
+    const courses = await query;
 
     res.json(courses);
   } catch (error) {
