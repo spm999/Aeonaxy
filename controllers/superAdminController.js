@@ -168,6 +168,69 @@ exports.loginSuperAdmin = async (req, res) => {
 };
 
 
+
+// Get Admin Profile
+exports.getAdminProfile = async (req, res) => {
+  const superadmin_id = req.params.superadminId;
+
+  console.log('Superadmin ID:', superadmin_id);
+
+  try {
+    // Fetch admin profile from database based on superadmin ID
+    const adminProfile = await sql`
+      SELECT name, email FROM superadmins WHERE superadmin_id = ${superadmin_id}
+    `;
+    
+    // Check if adminProfile is empty or undefined
+    if (!adminProfile || adminProfile.length === 0) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    // Log name and email for testing
+    const { name, email } = adminProfile[0];
+    console.log('Name:', name);
+    console.log('Email:', email);
+
+    res.json(adminProfile[0]);
+  } catch (error) {
+    console.error('Error fetching Admin profile:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+
+
+// Update user profile
+// Update Admin Profile
+exports.updateAdminProfile = async (req, res) => {
+  const superadmin_id = req.params.superadminId;
+  const { name, email, profile_picture } = req.body;
+
+  try {
+    // Check if the admin exists
+    const existingAdmin = await sql`
+      SELECT * FROM superadmins WHERE superadmin_id = ${superadmin_id}
+    `;
+    if (existingAdmin.length === 0) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    // Update admin profile in database
+    await sql`
+      UPDATE superadmins
+      SET name = ${name}, email = ${email}
+      WHERE superadmin_id = ${superadmin_id}
+    `;
+
+    res.json({ message: 'Admin profile updated successfully' });
+  } catch (error) {
+    console.error('Error updating admin profile:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+
+
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Create a new course
 exports.createCourse = async (req, res) => {

@@ -13,22 +13,17 @@ router.post('/login', authenticateSuperadmin, SuperAdminController.loginSuperAdm
 
 
 // Get user profile route (protected)
-// router.get('/profile/:userId',authenticateSuperadmin, UserController.getUserProfile);
+router.get('/profile/:superadminId',authenticateSuperadmin, SuperAdminController.getAdminProfile);
 
 // Update user profile route (protected)
-// router.put('/profile/:userId',authenticateSuperadmin, UserController.updateUserProfile);
-
-// Password reset routes
-// router.get('/reset-password/:token', UserController.renderResetPasswordPage);
-// router.post('/reset-password/:token', UserController.resetPassword);
-
+router.put('/profile/:superadminId',authenticateSuperadmin, SuperAdminController.updateAdminProfile);
 
 
 // Superadmin CRUD operations endpoints
 router.post('/courses', authenticateSuperadmin, SuperAdminController.createCourse);
-router.get('/courses/:id', authenticateSuperadmin, SuperAdminController.getCourse);
-router.put('/courses/:id', authenticateSuperadmin, SuperAdminController.updateCourse);
-router.delete('/courses/:id', authenticateSuperadmin, SuperAdminController.deleteCourse);
+router.get('/courses/:superadminId', authenticateSuperadmin, SuperAdminController.getCourse);
+router.put('/courses/:superadminId', authenticateSuperadmin, SuperAdminController.updateCourse);
+router.delete('/courses/:superadminId', authenticateSuperadmin, SuperAdminController.deleteCourse);
 
 
 module.exports = router;

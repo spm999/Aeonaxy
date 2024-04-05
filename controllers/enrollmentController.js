@@ -9,6 +9,7 @@ require('dotenv').config();
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+
 let { PGHOST, PGDATABASE, PGUSER, PGPASSWORD, JWT_SECRET } = process.env;
 
 PGUSER = decodeURIComponent(PGUSER);
@@ -23,9 +24,6 @@ const sql = postgres({
   ssl: 'require',
 });
 
-
-// Course Enrollment API
-// Import the Course model or fetch course details from the database
 
 // Function to get course details by ID (this is just an example, you need to implement this based on your setup)
 const getCourseDetailsById = async (course_id) => {
@@ -70,13 +68,13 @@ exports.enrollCourse = async (req, res) => {
     // Get course details
     const courseDetails = await getCourseDetailsById(course_id);
 
-
+// console.log(courseDetails)
     // Retrieve user's email address from the database
     const user = await sql`
 SELECT email, name FROM users WHERE user_id = ${user_id}
 `;
-const { email, name } = user[0]; // Extracting email and name from the query result
-
+    const { email, name } = user[0]; // Extracting email and name from the query result
+console.log(email, name)
     // Send registration confirmation email
     const data = await resend.emails.send({
       from: "E_learning <onboarding@resend.dev>",
