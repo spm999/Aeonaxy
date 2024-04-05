@@ -5,7 +5,9 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 const authenticateSuperadmin = (req, res, next) => {
   // Get token from request header
-  const token = req.header('Authorization');
+  // const token = req.header('Authorization');
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
   // Check if token exists
   if (!token) {
@@ -15,14 +17,15 @@ const authenticateSuperadmin = (req, res, next) => {
   try {
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
-
+// console.log(decoded)
+// console.log(decoded.role)
     // Check if user is a Superadmin
-    if (!decoded || !decoded.superadmin_id) {
+    if (!decoded || !decoded.role || decoded.role !== 'superadmin') {
       return res.status(403).json({ message: 'Not authorized as Superadmin' });
     }
 
     // Add Superadmin ID to request object
-    req.superadminId = decoded.superadmin_id;
+    req.superadminId = decoded.userId;
 
     // Call next middleware
     next();

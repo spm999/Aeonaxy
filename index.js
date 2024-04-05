@@ -27,25 +27,27 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 // login, signup route for Users///////////////////////////////////////////////////////////////////////
-const Users = require('./routes/userRoutes.js');
 
+const Users = require('./routes/userRoutes.js');
 app.use('/user', Users);
 
-
 // //////////////////////////////////////////////////////////////////////////////////////////////////////
-const SuperAdmin = require('./routes/superAdminRoute.js');
 
+const SuperAdmin = require('./routes/superAdminRoute.js');
 app.use('/superadmin', SuperAdmin);
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 const Courses=require('./routes/courseRoute.js')
 app.use('/courses', Courses)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const CourseEnrollment=require("./routes/courseEnrollmentRoute.js")
+app.use('/user', CourseEnrollment);
 
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////
 app.listen(PORT, () => {
-  // if (!process.env.RESEND_API_KEY) {
-  //   throw `Abort: You need to define RESEND_API_KEY in the .env file.`;
-  // }
     console.log(`Server is running on port ${PORT}`);
 });

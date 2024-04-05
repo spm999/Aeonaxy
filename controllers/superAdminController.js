@@ -25,48 +25,88 @@ const sql = postgres({
 
 const saltRounds = 10;
 
+//Password strength function
+function checkPasswordStrength(password) {
+  const minLength = 8;
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasDigit = /[0-9]/.test(password);
+  const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
+
+  if (password.length < minLength) {
+    return 'Password should be at least 8 characters long.';
+  }
+
+  if (!hasUpperCase) {
+    return 'Password should contain at least one uppercase letter.';
+  }
+
+  if (!hasLowerCase) {
+    return 'Password should contain at least one lowercase letter.';
+  }
+
+  if (!hasDigit) {
+    return 'Password should contain at least one digit.';
+  }
+
+  if (!hasSpecialChar) {
+    return 'Password should contain at least one special character.';
+  }
+
+  return 'strong'; // Password meets all criteria
+}
+
+
 // Generate JWT token
-const generateToken = (userId) => {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '24h' });
+const generateToken = (userId, role) => {
+  return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '24h' });
 };
 
 // SuperAdmin registration
 exports.registerSuperAdmin = async (req, res) => {
-    // Validate request body
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-  
-    const { name, email, password, profile_picture } = req.body;
-  
-    try {
-      // Check if superadmin already exists
-      const existingSuperAdmin = await sql`
+  // Validate request body
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { name, email, password, profile_picture } = req.body;
+
+  try {
+    // Check if superadmin already exists
+    const existingSuperAdmin = await sql`
         SELECT * FROM superadmins WHERE email = ${email}
       `;
-      if (existingSuperAdmin.length > 0) {
-        return res.status(400).json({ message: 'SuperAdmin already exists' });
-      }
-  
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-  
-      // Insert new superadmin into database
-      await sql`
+    if (existingSuperAdmin.length > 0) {
+      return res.status(400).json({ message: 'SuperAdmin already exists' });
+    }
+
+    // Check password strength
+    const passwordStrength = checkPasswordStrength(password);
+    if (passwordStrength !== 'strong') {
+      return res.status(400).json({ message: passwordStrength });
+    }
+
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Insert new superadmin into database
+    await sql`
         INSERT INTO superadmins (name, email, password_hash, profile_picture)
         VALUES (${name}, ${email}, ${hashedPassword}, ${profile_picture})
       `;
-  
-      // Generate JWT token
-      const token = generateToken(email);
-  
-      // Send registration confirmation email
-      const data=await resend.emails.send({
-        from: "E_learning <onboarding@resend.dev>",
-        to: [email],
-        subject: "SuperAdmin Registration Confirmation",
-        html: `
+
+    // Generate JWT token
+    const token = jwt.sign({ userId: email, role: 'superadmin' }, JWT_SECRET, { expiresIn: '24h' });
+    // 
+
+    // Send registration confirmation email
+    const data = await resend.emails.send({
+      from: "E_learning <onboarding@resend.dev>",
+      to: [email],
+      subject: "SuperAdmin Registration Confirmation",
+      html: `
           <p>Dear ${name},</p>
           <br>
           <p>Thank you for registering as a SuperAdmin!</p>
@@ -75,61 +115,61 @@ exports.registerSuperAdmin = async (req, res) => {
           <p>Best regards,</p>
           <p>The E_learning Team</p>
         `,
-      });
-      
-      res.status(201).json({ message: 'SuperAdmin registered successfully', token, email_confirmation: "Email sent" });
-    } catch (error) {
-      console.error('Error registering SuperAdmin:', error);
-      res.status(500).json({ message: 'Server Error' });
-    }
-  };
-  
+    });
+
+    res.status(201).json({ message: 'SuperAdmin registered successfully', token, email_confirmation: "Email sent" });
+  } catch (error) {
+    console.error('Error registering SuperAdmin:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 
 // SuperAdmin login
 exports.loginSuperAdmin = async (req, res) => {
-    const { email, password } = req.body;
-  
-    try {
-      // Fetch superadmin from database by email
-      const superadmin = await sql`SELECT * FROM superadmins WHERE email = ${email}`;
-  
-      // Check if superadmin exists
-      if (superadmin.length === 0) {
-        return res.status(404).json({ message: 'SuperAdmin not found' });
-      }
-  
+  const { email, password } = req.body;
 
-      // Compare passwords
-      const match = await bcrypt.compare(password, superadmin[0].password_hash);
-  
-      if (!match) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
-  
-      // Generate JWT token
-      const token = generateToken(superadmin[0].superadmin_id);
-  
-      // Prepare response object
-      const responseData = {
-        message: 'Login successful',
-        token,
-      };
-  
-      // Add profile_picture to response if available
-      if (superadmin[0].profile_picture) {
-        responseData.profile_picture = superadmin[0].profile_picture;
-      }
-  
-      res.json(responseData);
-    } catch (error) {
-      console.error('Error logging in SuperAdmin:', error);
-      res.status(500).json({ message: 'Server Error' });
+  try {
+    // Fetch superadmin from database by email
+    const superadmin = await sql`SELECT * FROM superadmins WHERE email = ${email}`;
+
+    // Check if superadmin exists
+    if (superadmin.length === 0) {
+      return res.status(404).json({ message: 'SuperAdmin not found' });
     }
-  };
-  
 
-  // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // Create a new course
+
+    // Compare passwords
+    const match = await bcrypt.compare(password, superadmin[0].password_hash);
+
+    if (!match) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // // Generate JWT token
+    const token = generateToken(superadmin[0].superadmin_id, 'superadmin');
+
+    // Prepare response object
+    const responseData = {
+      message: 'Login successful',
+      token,
+    };
+
+    // Add profile_picture to response if available
+    if (superadmin[0].profile_picture) {
+      responseData.profile_picture = superadmin[0].profile_picture;
+    }
+
+    res.json(responseData);
+  } catch (error) {
+    console.error('Error logging in SuperAdmin:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Create a new course
 exports.createCourse = async (req, res) => {
   // Validate request body
   const errors = validationResult(req);

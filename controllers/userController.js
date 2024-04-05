@@ -23,6 +23,40 @@ const sql = postgres({
 
 const saltRounds = 10;
 
+
+//Password strength function
+function checkPasswordStrength(password) {
+  const minLength = 8;
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasDigit = /[0-9]/.test(password);
+  const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
+
+  if (password.length < minLength) {
+    return 'Password should be at least 8 characters long.';
+  }
+
+  if (!hasUpperCase) {
+    return 'Password should contain at least one uppercase letter.';
+  }
+
+  if (!hasLowerCase) {
+    return 'Password should contain at least one lowercase letter.';
+  }
+
+  if (!hasDigit) {
+    return 'Password should contain at least one digit.';
+  }
+
+  if (!hasSpecialChar) {
+    return 'Password should contain at least one special character.';
+  }
+
+  return 'strong'; // Password meets all criteria
+}
+
+
+
 // User profile
 exports.getUserProfile = async (req, res) => {
   const userId = req.params.userId;
@@ -50,6 +84,14 @@ exports.updateUserProfile = async (req, res) => {
   const { name, email, profile_picture } = req.body;
 
   try {
+    // Check if the user exists
+    const existingUser = await sql`
+      SELECT * FROM users WHERE user_id = ${userId}
+    `;
+    if (existingUser.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     // Update user profile in database
     await sql`
       UPDATE users
@@ -64,9 +106,10 @@ exports.updateUserProfile = async (req, res) => {
   }
 };
 
+
 // Generate JWT token
-const generateToken = (userId) => {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '24h' });
+const generateToken = (userId, role) => {
+  return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '24h' });
 };
 
 // User registration
@@ -88,6 +131,13 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+        // Check password strength
+        const passwordStrength = checkPasswordStrength(password);
+        if (passwordStrength !== 'strong') {
+          return res.status(400).json({ message: passwordStrength });
+        }
+
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -98,7 +148,7 @@ exports.registerUser = async (req, res) => {
     `;
 
     // Generate JWT token
-    const token = generateToken(email);
+    const token = generateToken(email, 'user');
 
     // Send registration confirmation email
     const data=await resend.emails.send({
@@ -145,7 +195,7 @@ exports.loginUser = async (req, res) => {
     }
 
     // Generate JWT token
-    const token = generateToken(user[0].user_id);
+    const token = generateToken(user[0].user_id, 'user');
 
     res.json({ message: 'Login successful', token });
   } catch (error) {
