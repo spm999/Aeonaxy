@@ -12,6 +12,7 @@ This Node.js API is built with Express and NeonDB (PostgreSQL) for managing user
 
 ## Database Schema
 
+```
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -19,9 +20,7 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     profile_picture VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE courses (
+);CREATE TABLE courses (
     course_id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -29,18 +28,14 @@ CREATE TABLE courses (
     level VARCHAR(50),
     popularity INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE superadmins (
+);CREATE TABLE superadmins (
     superadmin_id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     profile_picture VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE user_enrollments (
+);CREATE TABLE user_enrollments (
     enrollment_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     course_id INT NOT NULL,
@@ -49,6 +44,8 @@ CREATE TABLE user_enrollments (
     CONSTRAINT fk_course FOREIGN KEY (course_id) REFERENCES courses(course_id),
     CONSTRAINT unique_enrollment UNIQUE (user_id, course_id)
 );
+```
+
 
 ## Libraries
 
